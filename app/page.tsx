@@ -1,5 +1,5 @@
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
 import { LoginForm } from "@/components/login-form"
 import Image from "next/image"
 
@@ -16,10 +16,9 @@ export default async function HomePage({
   }
 
   // Check if admin is logged in
-  const cookieStore = await cookies()
-  const adminSession = cookieStore.get("admin_session")
+  const session = await auth()
 
-  if (adminSession?.value === "authenticated") {
+  if (session?.user) {
     redirect("/admin")
   }
 

@@ -8,6 +8,10 @@ export interface Member {
   street: string
   postal_code: string
   city: string
+  email?: string
+  phone?: string
+  mobile?: string
+  communication_preference?: string
   notes: string
   token: string
   expiry_date: string
@@ -28,6 +32,10 @@ export interface ColumnMapping {
   street: string | null
   postalCode: string | null
   city: string | null
+  email: string | null
+  phone: string | null
+  mobile: string | null
+  communicationPreference: string | null
 }
 
 export const GERMAN_COLUMN_NAMES: Record<string, keyof ColumnMapping> = {
@@ -80,4 +88,29 @@ export const GERMAN_COLUMN_NAMES: Record<string, keyof ColumnMapping> = {
   city: "city",
   wohnort: "city",
   gemeinde: "city",
+  email: "email",
+  "e-mail": "email",
+  "e mail": "email",
+  mail: "email",
+  telefon: "phone",
+  telefonnummer: "phone",
+  "telefon-nummer": "phone",
+  "telefon nummer": "phone",
+  tel: "phone",
+  festnetz: "phone",
+  handy: "mobile",
+  handynummer: "mobile",
+  "handy-nummer": "mobile",
+  "handy nummer": "mobile",
+  mobil: "mobile",
+  mobiltelefon: "mobile",
+  "mobil-telefon": "mobile",
+  "kommunikationspräferenz": "communicationPreference",
+  "kommunikations-präferenz": "communicationPreference",
+  "kommunikations präferenz": "communicationPreference",
+  kontaktpräferenz: "communicationPreference",
+  "kontakt-präferenz": "communicationPreference",
+  "kontakt präferenz": "communicationPreference",
+  präferenz: "communicationPreference",
+  kontaktweg: "communicationPreference",
 }

@@ -1,11 +1,13 @@
-import { createClient } from "@/lib/supabase/server"
 import { MemberEditForm } from "@/components/member-edit-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, Clock } from "lucide-react"
+import { AlertCircle, Clock, Mail } from "lucide-react"
 import { isValidTokenFormat } from "@/lib/token"
+import type { Member } from "@/lib/types"
 import Image from "next/image"
 import Link from "next/link"
+
+const CONTACT_EMAIL = "verwaltung@klosterbrauerei-reutberg.de"
 
 interface MitgliedPageProps {
   searchParams: Promise<{ token?: string }>
@@ -46,18 +48,52 @@ export default async function MitgliedPage({ searchParams }: MitgliedPageProps) 
         <div className="container mx-auto flex min-h-screen flex-col items-center justify-center px-4 py-8">
           <Logo />
           <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle className="text-destructive">Ungültiger Link</CardTitle>
+            <CardHeader className="text-center">
+              <CardTitle className="text-amber-700">Kein Link vorhanden</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Fehler</AlertTitle>
-                <AlertDescription>
-                  Kein gültiger Bearbeitungslink vorhanden. Bitte verwenden Sie den Link, den Sie per E-Mail erhalten
-                  haben.
-                </AlertDescription>
-              </Alert>
+            <CardContent className="space-y-4">
+              <div className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900">
+                <div className="mb-2 font-semibold">🔗 Bitte verwenden Sie Ihren persönlichen Link zur Adressaktualisierung</div>
+                <p className="leading-relaxed mb-3">
+                  Um Ihre Adressdaten zu aktualisieren, benötigen Sie den persönlichen Link, den Sie per E-Mail erhalten haben.
+                </p>
+                <div className="rounded-md bg-white p-3 space-y-3">
+                  <div>
+                    <p className="font-medium text-amber-900 mb-2">So finden Sie Ihren Link:</p>
+                    <ul className="list-disc list-inside space-y-1 text-amber-800">
+                      <li>Prüfen Sie Ihre E-Mails von der Klosterbrauerei Reutberg</li>
+                      <li>Der Link beginnt mit der Adresse dieser Website</li>
+                      <li>Klicken Sie auf den Link in der E-Mail</li>
+                    </ul>
+                  </div>
+                  <div className="border-t pt-3">
+                    <p className="font-medium text-amber-900 mb-2">Ihre Adresse per E-Mail mitteilen</p>
+                    <p className="text-amber-800 mb-2">
+                      Falls Sie keinen Link haben, können Sie Ihre aktuelle Adresse direkt per E-Mail mitteilen:
+                    </p>
+                    <div className="flex items-center gap-2 rounded-md bg-amber-100 p-2">
+                      <Mail className="h-4 w-4 flex-shrink-0 text-amber-900" />
+                      <a
+                        href={`mailto:${CONTACT_EMAIL}?subject=Adressaktualisierung&body=Bitte aktualisieren Sie meine Adressdaten.`}
+                        className="text-sm font-medium text-amber-900 underline hover:text-amber-950"
+                      >
+                        {CONTACT_EMAIL}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="text-center text-xs text-muted-foreground">
+                <p>
+                  <Link href="/impressum" className="underline hover:text-foreground">
+                    Impressum
+                  </Link>
+                  {" · "}
+                  <Link href="/datenschutz" className="underline hover:text-foreground">
+                    Datenschutzerklärung
+                  </Link>
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -72,18 +108,52 @@ export default async function MitgliedPage({ searchParams }: MitgliedPageProps) 
         <div className="container mx-auto flex min-h-screen flex-col items-center justify-center px-4 py-8">
           <Logo />
           <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle className="text-destructive">Ungültiger Link</CardTitle>
+            <CardHeader className="text-center">
+              <CardTitle className="text-amber-700">Ungültiges Link-Format</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Fehler</AlertTitle>
-                <AlertDescription>
-                  Der Bearbeitungslink hat ein ungültiges Format. Bitte verwenden Sie den Link, den Sie per E-Mail erhalten
-                  haben.
-                </AlertDescription>
-              </Alert>
+            <CardContent className="space-y-4">
+              <div className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900">
+                <div className="mb-2 font-semibold">⚠️ Der Link zur Adressaktualisierung hat ein ungültiges Format</div>
+                <p className="leading-relaxed mb-3">
+                  Der verwendete Link entspricht nicht dem erwarteten Format. Bitte verwenden Sie den vollständigen Link aus Ihrer E-Mail.
+                </p>
+                <div className="rounded-md bg-white p-3 space-y-3">
+                  <div>
+                    <p className="font-medium text-amber-900 mb-2">Bitte beachten Sie:</p>
+                    <ul className="list-disc list-inside space-y-1 text-amber-800">
+                      <li>Kopieren Sie den Link vollständig aus der E-Mail</li>
+                      <li>Der Link sollte mit der Website-Adresse beginnen</li>
+                      <li>Vermeiden Sie manuelle Änderungen am Link</li>
+                    </ul>
+                  </div>
+                  <div className="border-t pt-3">
+                    <p className="font-medium text-amber-900 mb-2">Ihre Adresse per E-Mail mitteilen</p>
+                    <p className="text-amber-800 mb-2">
+                      Falls Sie Probleme mit dem Link haben, können Sie Ihre aktuelle Adresse direkt per E-Mail mitteilen:
+                    </p>
+                    <div className="flex items-center gap-2 rounded-md bg-amber-100 p-2">
+                      <Mail className="h-4 w-4 flex-shrink-0 text-amber-900" />
+                      <a
+                        href={`mailto:${CONTACT_EMAIL}?subject=Adressaktualisierung&body=Bitte aktualisieren Sie meine Adressdaten.`}
+                        className="text-sm font-medium text-amber-900 underline hover:text-amber-950"
+                      >
+                        {CONTACT_EMAIL}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="text-center text-xs text-muted-foreground">
+                <p>
+                  <Link href="/impressum" className="underline hover:text-foreground">
+                    Impressum
+                  </Link>
+                  {" · "}
+                  <Link href="/datenschutz" className="underline hover:text-foreground">
+                    Datenschutzerklärung
+                  </Link>
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -91,34 +161,104 @@ export default async function MitgliedPage({ searchParams }: MitgliedPageProps) 
     )
   }
 
-  const supabase = await createClient()
+  // Fetch member directly via admin client (server-side)
+  const { createAdminClient } = await import("@/lib/supabase/admin")
+  const supabase = createAdminClient()
 
-  // Fetch member by token with expiry check in query
-  const { data: member, error } = await supabase
-    .from("members")
-    .select("*")
-    .eq("token", token)
-    .gt("expiry_date", new Date().toISOString())
-    .single()
+  let member: Member | null = null
+  let errorMessage: string | null = null
 
-  if (error || !member) {
+  try {
+    const { data, error } = await supabase
+      .from("members")
+      .select("*")
+      .eq("token", token)
+      .gt("expiry_date", new Date().toISOString())
+      .single()
+
+    if (error || !data) {
+      errorMessage = "Token nicht gefunden oder abgelaufen"
+    } else {
+      member = data as Member
+    }
+  } catch (err) {
+    errorMessage = "Fehler beim Laden der Daten"
+  }
+
+  if (!member || errorMessage) {
+    // Check if token exists but is expired
+    let isExpired = false
+    try {
+      const { data: expiredMember } = await supabase
+        .from("members")
+        .select("expiry_date")
+        .eq("token", token)
+        .single()
+
+      if (expiredMember) {
+        const expiryDate = new Date(expiredMember.expiry_date)
+        isExpired = new Date() > expiryDate
+      }
+    } catch {
+      // Ignore errors
+    }
+
     return (
       <main className="min-h-screen bg-white">
         <div className="container mx-auto flex min-h-screen flex-col items-center justify-center px-4 py-8">
           <Logo />
           <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle className="text-destructive">Link nicht gefunden oder abgelaufen</CardTitle>
+            <CardHeader className="text-center">
+              <CardTitle className={isExpired ? "text-amber-700" : "text-destructive"}>
+                {isExpired ? "Link abgelaufen" : "Link nicht verfügbar"}
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Fehler</AlertTitle>
-                <AlertDescription>
-                  Dieser Bearbeitungslink ist ungültig, existiert nicht mehr oder ist abgelaufen. Links sind 4 Wochen gültig. 
-                  Bitte wenden Sie sich an die Verwaltung für einen neuen Link.
-                </AlertDescription>
-              </Alert>
+            <CardContent className="space-y-4">
+              <div className="rounded-lg bg-amber-50 p-4 text-sm text-amber-900">
+                <div className="mb-2 font-semibold">
+                  {isExpired ? "⏰ Dieser Link ist abgelaufen" : "🔗 Dieser Link ist nicht mehr gültig"}
+                </div>
+                <p className="mb-3 leading-relaxed">
+                  {isExpired
+                    ? "Ihr Link zur Adressaktualisierung ist abgelaufen. Bearbeitungslinks sind 4 Wochen gültig."
+                    : "Der Link zur Adressaktualisierung konnte nicht gefunden werden oder ist nicht mehr gültig."}
+                </p>
+                <div className="rounded-md bg-white p-3 space-y-3">
+                  <div>
+                    <p className="font-medium text-amber-900 mb-2">Was können Sie tun?</p>
+                    <ul className="list-disc list-inside space-y-1 text-amber-800">
+                      <li>Verwenden Sie den aktuellsten Link aus Ihrer E-Mail</li>
+                      <li>Prüfen Sie, ob der Link vollständig kopiert wurde</li>
+                    </ul>
+                  </div>
+                  <div className="border-t pt-3">
+                    <p className="font-medium text-amber-900 mb-2">Ihre Adresse aktualisieren</p>
+                    <p className="text-amber-800 mb-2">
+                      Falls Sie keinen gültigen Link haben, können Sie Ihre aktuelle Adresse direkt per E-Mail mitteilen:
+                    </p>
+                    <div className="flex items-center gap-2 rounded-md bg-amber-100 p-2">
+                      <Mail className="h-4 w-4 flex-shrink-0 text-amber-900" />
+                      <a
+                        href={`mailto:${CONTACT_EMAIL}?subject=Adressaktualisierung&body=Bitte aktualisieren Sie meine Adressdaten.`}
+                        className="text-sm font-medium text-amber-900 underline hover:text-amber-950"
+                      >
+                        {CONTACT_EMAIL}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="text-center text-xs text-muted-foreground">
+                <p>
+                  <Link href="/impressum" className="underline hover:text-foreground">
+                    Impressum
+                  </Link>
+                  {" · "}
+                  <Link href="/datenschutz" className="underline hover:text-foreground">
+                    Datenschutzerklärung
+                  </Link>
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -126,35 +266,8 @@ export default async function MitgliedPage({ searchParams }: MitgliedPageProps) 
     )
   }
 
-  // Additional expiry check (redundant but safe)
+  // Extract expiry date from member
   const expiryDate = new Date(member.expiry_date)
-  const now = new Date()
-
-  if (now > expiryDate) {
-    return (
-      <main className="min-h-screen bg-white">
-        <div className="container mx-auto flex min-h-screen flex-col items-center justify-center px-4 py-8">
-          <Logo />
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle className="text-destructive">Link abgelaufen</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Fehler</AlertTitle>
-                <AlertDescription>
-                  Dieser Bearbeitungslink ist abgelaufen. Links sind 4 Wochen gültig. Bitte wenden Sie sich an die
-                  Verwaltung für einen neuen Link.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    )
-  }
-
   const remainingTime = formatRemainingDays(expiryDate)
 
   return (
@@ -163,7 +276,7 @@ export default async function MitgliedPage({ searchParams }: MitgliedPageProps) 
         <Logo />
         <Card className="w-full max-w-xl">
           <CardHeader>
-            <CardTitle>Adressdaten aktualisieren</CardTitle>
+            <CardTitle>Adressaktualisierung</CardTitle>
             <div className="mt-4 space-y-3 text-sm text-muted-foreground">
               <p className="leading-relaxed">
                 <strong>Liebe Mitglieder,</strong> wir bitten Sie, Ihre aktuelle Anschrift zu überprüfen und bei Bedarf
@@ -195,17 +308,6 @@ export default async function MitgliedPage({ searchParams }: MitgliedPageProps) 
                 </Link>
               </p>
               <p className="mt-1">Diese Seite verwendet keine Cookies.</p>
-              <p className="mt-2">
-                Innovative IT Dienstleistungen?{" "}
-                <Link
-                  href="https://www.christiangotthardt.de/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-foreground"
-                >
-                  https://www.christiangotthardt.de/
-                </Link>
-              </p>
             </div>
           </CardContent>
         </Card>

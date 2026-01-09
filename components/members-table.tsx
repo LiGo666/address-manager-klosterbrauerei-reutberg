@@ -368,7 +368,8 @@ export function MembersTable({ members, isLoading, onRenewLink, onDelete, onInva
                   member.modified &&
                   (member.original_street !== member.street ||
                     member.original_postal_code !== member.postal_code ||
-                    member.original_city !== member.city)
+                    member.original_city !== member.city ||
+                    (member.notes && member.notes.trim().length > 0))
 
                 return (
                   <TableRow key={member.customer_number} className={member.modified ? "bg-green-50" : ""}>
@@ -397,10 +398,39 @@ export function MembersTable({ members, isLoading, onRenewLink, onDelete, onInva
                         <span className="block text-sm text-muted-foreground">
                           {member.postal_code} {member.city}
                         </span>
+                        {(member.email || member.phone || member.mobile) && (
+                          <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                            {member.email && (
+                              <div className="flex items-center gap-1">
+                                <span>📧</span>
+                                <span className="truncate max-w-[200px]" title={member.email}>
+                                  {member.email}
+                                </span>
+                              </div>
+                            )}
+                            {member.phone && (
+                              <div className="flex items-center gap-1">
+                                <span>📞</span>
+                                <span>{member.phone}</span>
+                              </div>
+                            )}
+                            {member.mobile && (
+                              <div className="flex items-center gap-1">
+                                <span>📱</span>
+                                <span>{member.mobile}</span>
+                              </div>
+                            )}
+                            {member.communication_preference && (
+                              <div className="text-xs italic text-muted-foreground/80">
+                                Präferenz: {member.communication_preference}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
-                      {hasChanges ? (
+                      {hasChanges || (member.modified && member.notes) ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <div className="cursor-help text-xs space-y-1">
@@ -425,10 +455,24 @@ export function MembersTable({ members, isLoading, onRenewLink, onDelete, onInva
                                   <span>{member.city}</span>
                                 </div>
                               )}
+                              {member.notes && (
+                                <div className="text-blue-700 mt-2 pt-2 border-t border-blue-200">
+                                  <div className="font-medium">Weitere Informationen:</div>
+                                  <div className="mt-1 whitespace-pre-wrap">{member.notes}</div>
+                                </div>
+                              )}
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Geändert am {formatDate(member.modified_at)}</p>
+                          <TooltipContent className="max-w-md">
+                            <div className="space-y-2">
+                              <p>Geändert am {formatDate(member.modified_at)}</p>
+                              {member.notes && (
+                                <div className="mt-2 pt-2 border-t">
+                                  <p className="font-medium text-xs mb-1">Weitere Informationen:</p>
+                                  <p className="text-xs whitespace-pre-wrap">{member.notes}</p>
+                                </div>
+                              )}
+                            </div>
                           </TooltipContent>
                         </Tooltip>
                       ) : member.modified ? (

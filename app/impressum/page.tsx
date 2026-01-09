@@ -117,6 +117,17 @@ export default function ImpressumPage() {
                 Erstellt wird die Seite von Rainer Gast.
                 <br />
                 <br />
+                Technische Umsetzung:{" "}
+                <a
+                  href="https://www.christiangotthardt.de/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-amber-700 underline hover:text-amber-800"
+                >
+                  Christian Gotthardt
+                </a>
+                <br />
+                <br />
                 Die Verantwortlichen sind unter der oben angegebenen Anschrift zu erreichen.
               </p>
             </section>
@@ -143,10 +154,6 @@ export default function ImpressumPage() {
             <div className="mt-8 border-t pt-4 text-center text-sm text-muted-foreground">
               <Link href="/datenschutz" className="underline hover:text-foreground">
                 Datenschutzerklärung
-              </Link>
-              {" · "}
-              <Link href="/" className="underline hover:text-foreground">
-                Zurück zur Startseite
               </Link>
             </div>
           </CardContent>

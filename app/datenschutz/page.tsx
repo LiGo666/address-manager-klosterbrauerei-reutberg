@@ -281,10 +281,6 @@ export default function DatenschutzPage() {
               <Link href="/impressum" className="underline hover:text-foreground">
                 Impressum
               </Link>
-              {" · "}
-              <Link href="/" className="underline hover:text-foreground">
-                Zurück zur Startseite
-              </Link>
             </div>
           </CardContent>
         </Card>

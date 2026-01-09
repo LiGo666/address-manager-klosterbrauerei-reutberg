@@ -4,8 +4,6 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { FileSpreadsheet, FileText, Download, Loader2 } from "lucide-react"
 import type { Member } from "@/lib/types"
-import * as XLSX from "xlsx"
-import { createClient } from "@/lib/supabase/client"
 
 interface ExportButtonsProps {
   members: Member[]
@@ -14,85 +12,16 @@ interface ExportButtonsProps {
 
 export function ExportButtons({ members, totalCount }: ExportButtonsProps) {
   const [isExporting, setIsExporting] = useState(false)
-  const supabase = createClient()
 
-  const fetchAllMembers = async (): Promise<Member[]> => {
-    const allMembers: Member[] = []
-    const pageSize = 1000 // Supabase max limit
-    let from = 0
-    let hasMore = true
-
-    while (hasMore) {
-      const { data, error } = await supabase
-        .from("members")
-        .select("*")
-        .order("customer_number", { ascending: true })
-        .range(from, from + pageSize - 1)
-
-      if (error) {
-        throw error
-      }
-
-      if (data && data.length > 0) {
-        allMembers.push(...data)
-        from += pageSize
-        hasMore = data.length === pageSize
-      } else {
-        hasMore = false
-      }
-    }
-
-    return allMembers
-  }
-
-  const getExportData = (membersToExport: Member[]) => {
-    const baseUrl = typeof window !== "undefined" ? window.location.origin : ""
-
-    return membersToExport.map((member) => ({
-      ID: member.customer_number,
-      Anrede: member.salutation,
-      Vorname: member.first_name,
-      Nachname: member.last_name,
-      Name2: member.name2,
-      Straße: member.street,
-      PLZ: member.postal_code,
-      Ort: member.city,
-      Notizen: member.notes,
-      Geändert: member.modified ? "Ja" : "Nein",
-      "Geändert am": member.modified_at ? new Date(member.modified_at).toLocaleDateString("de-DE") : "",
-      Bearbeitungslink: `${baseUrl}?token=${member.token}`,
-    }))
-  }
 
   const exportCSV = async () => {
     setIsExporting(true)
     try {
-      const allMembers = await fetchAllMembers()
-      const data = getExportData(allMembers)
-      if (data.length === 0) {
-        setIsExporting(false)
-        return
+      const response = await fetch("/api/admin/members/export?format=csv")
+      if (!response.ok) {
+        throw new Error("Failed to export CSV")
       }
-
-    const headers = Object.keys(data[0])
-    const csvRows = [
-      headers.join(";"),
-      ...data.map((row) =>
-        headers
-          .map((header) => {
-            const value = row[header as keyof typeof row] || ""
-            // Escape quotes and wrap in quotes if contains special chars
-            if (value.includes(";") || value.includes('"') || value.includes("\n")) {
-              return `"${value.replace(/"/g, '""')}"`
-            }
-            return value
-          })
-          .join(";"),
-      ),
-    ]
-
-      const csvContent = "\uFEFF" + csvRows.join("\n") // BOM for Excel UTF-8
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+      const blob = await response.blob()
       const link = document.createElement("a")
       link.href = URL.createObjectURL(blob)
       link.download = `mitglieder_export_${new Date().toISOString().split("T")[0]}.csv`
@@ -108,24 +37,15 @@ export function ExportButtons({ members, totalCount }: ExportButtonsProps) {
   const exportExcel = async () => {
     setIsExporting(true)
     try {
-      const allMembers = await fetchAllMembers()
-      const data = getExportData(allMembers)
-      if (data.length === 0) {
-        setIsExporting(false)
-        return
+      const response = await fetch("/api/admin/members/export?format=xlsx")
+      if (!response.ok) {
+        throw new Error("Failed to export Excel")
       }
-
-    const worksheet = XLSX.utils.json_to_sheet(data)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Mitglieder")
-
-    // Auto-size columns
-    const colWidths = Object.keys(data[0]).map((key) => ({
-      wch: Math.max(key.length, ...data.map((row) => String(row[key as keyof typeof row] || "").length)),
-    }))
-    worksheet["!cols"] = colWidths
-
-      XLSX.writeFile(workbook, `mitglieder_export_${new Date().toISOString().split("T")[0]}.xlsx`)
+      const blob = await response.blob()
+      const link = document.createElement("a")
+      link.href = URL.createObjectURL(blob)
+      link.download = `mitglieder_export_${new Date().toISOString().split("T")[0]}.xlsx`
+      link.click()
     } catch (err) {
       console.error("Export error:", err)
       alert("Fehler beim Export: " + (err instanceof Error ? err.message : "Unbekannter Fehler"))

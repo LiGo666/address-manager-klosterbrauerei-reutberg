@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -24,18 +25,19 @@ export function LoginForm() {
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+      const result = await signIn("credentials", {
+        username,
+        password,
+        redirect: false,
       })
 
-      if (response.ok) {
+      if (result?.error) {
+        setError("Ungültige Anmeldedaten")
+      } else if (result?.ok) {
         router.push("/admin")
         router.refresh()
       } else {
-        const data = await response.json()
-        setError(data.error || "Anmeldung fehlgeschlagen")
+        setError("Anmeldung fehlgeschlagen")
       }
     } catch {
       setError("Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.")

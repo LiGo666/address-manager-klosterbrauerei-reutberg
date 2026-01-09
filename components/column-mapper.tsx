@@ -25,6 +25,10 @@ const FIELD_LABELS: Record<keyof ColumnMapping, { label: string; required: boole
   street: { label: "Straße", required: true },
   postalCode: { label: "PLZ", required: true },
   city: { label: "Ort", required: true },
+  email: { label: "E-Mail", required: false },
+  phone: { label: "Telefon", required: false },
+  mobile: { label: "Handy", required: false },
+  communicationPreference: { label: "Kommunikationspräferenz", required: false },
 }
 
 export function ColumnMapper({ headers, sampleData, onMappingComplete, onCancel }: ColumnMapperProps) {
@@ -37,6 +41,10 @@ export function ColumnMapper({ headers, sampleData, onMappingComplete, onCancel 
     street: null,
     postalCode: null,
     city: null,
+    email: null,
+    phone: null,
+    mobile: null,
+    communicationPreference: null,
   })
 
   useEffect(() => {
@@ -49,6 +57,10 @@ export function ColumnMapper({ headers, sampleData, onMappingComplete, onCancel 
       street: null,
       postalCode: null,
       city: null,
+      email: null,
+      phone: null,
+      mobile: null,
+      communicationPreference: null,
     }
 
     headers.forEach((header) => {

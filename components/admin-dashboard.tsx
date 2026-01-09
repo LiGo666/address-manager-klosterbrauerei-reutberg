@@ -15,8 +15,6 @@ import { ColumnMapper } from "@/components/column-mapper"
 import { MembersTable } from "@/components/members-table"
 import { ExportButtons } from "@/components/export-buttons"
 import type { Member, ColumnMapping } from "@/lib/types"
-import { createClient } from "@/lib/supabase/client"
-import { generateCuid2Token } from "@/lib/token"
 import Image from "next/image"
 
 const PAGE_SIZE = 50 // Anzahl der Mitglieder pro Seite
@@ -40,47 +38,34 @@ export function AdminDashboard() {
   const [deleteConfirmation, setDeleteConfirmation] = useState("")
   const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   // Fetch total count
   const fetchTotalCount = useCallback(async () => {
     try {
-      const { count, error } = await supabase
-        .from("members")
-        .select("*", { count: "exact", head: true })
-
-      if (error) {
-        console.error("Error fetching count:", error)
-        return 0
+      const response = await fetch("/api/admin/members/count")
+      if (!response.ok) {
+        throw new Error("Failed to fetch count")
       }
-      return count || 0
+      const data = await response.json()
+      return data.count || 0
     } catch (err) {
       console.error("Error fetching count:", err)
       return 0
     }
-  }, [supabase])
+  }, [])
 
   const fetchMembers = useCallback(async (page: number = 1) => {
     setIsLoading(true)
     setError(null)
     try {
-      const from = (page - 1) * PAGE_SIZE
-      const to = from + PAGE_SIZE - 1
-
-      // Fetch members with pagination
-      const { data, error } = await supabase
-        .from("members")
-        .select("*")
-        .order("customer_number", { ascending: true })
-        .range(from, to)
-
-      if (error) {
-        throw error
+      const response = await fetch(`/api/admin/members?page=${page}`)
+      if (!response.ok) {
+        throw new Error("Failed to fetch members")
       }
-
-      setMembers(data || [])
+      const data = await response.json()
+      setMembers(data.members || [])
       
-      // Fetch total count if not already set or if page changed
+      // Fetch total count
       const count = await fetchTotalCount()
       setTotalCount(count)
     } catch (err) {
@@ -89,19 +74,15 @@ export function AdminDashboard() {
     } finally {
       setIsLoading(false)
     }
-  }, [supabase, fetchTotalCount])
+  }, [fetchTotalCount])
 
   // Fetch members when page changes
   useEffect(() => {
     fetchMembers(currentPage)
   }, [currentPage, fetchMembers])
 
-  useEffect(() => {
-    fetchMembers()
-  }, [fetchMembers])
-
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" })
+    await fetch("/api/auth/signout", { method: "POST" })
     router.push("/")
     router.refresh()
   }
@@ -135,6 +116,10 @@ export function AdminDashboard() {
         street: mapping.street ? row[mapping.street] || "" : "",
         postal_code: mapping.postalCode ? row[mapping.postalCode] || "" : "",
         city: mapping.city ? row[mapping.city] || "" : "",
+        email: mapping.email ? row[mapping.email]?.trim() || null : null,
+        phone: mapping.phone ? row[mapping.phone]?.trim() || null : null,
+        mobile: mapping.mobile ? row[mapping.mobile]?.trim() || null : null,
+        communication_preference: mapping.communicationPreference ? row[mapping.communicationPreference]?.trim() || null : null,
         notes: "",
         token: "", // Will be set to CUID2 for new members
         expiry_date: expiryDate.toISOString(),
@@ -144,63 +129,23 @@ export function AdminDashboard() {
     })
 
     try {
-      // Merge members: Update existing or insert new based on customer_number
-      let updated = 0
-      let inserted = 0
+      const response = await fetch("/api/admin/members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ members: newMembers }),
+      })
 
-      for (const member of newMembers) {
-        // Check if member exists
-        const { data: existing } = await supabase
-          .from("members")
-          .select("customer_number")
-          .eq("customer_number", member.customer_number)
-          .single()
-
-        if (existing) {
-          // Update existing member - keep existing token, only update data and expiry
-          const { data: existingMember } = await supabase
-            .from("members")
-            .select("token")
-            .eq("customer_number", member.customer_number)
-            .single()
-
-          const updateData: Partial<Member> = {
-            salutation: member.salutation,
-            first_name: member.first_name,
-            last_name: member.last_name,
-            name2: member.name2,
-            street: member.street,
-            postal_code: member.postal_code,
-            city: member.city,
-            notes: member.notes,
-            expiry_date: member.expiry_date, // Update expiry on import
-            // Token stays the same (keep existing CUID2)
-          }
-
-          const { error: updateError } = await supabase
-            .from("members")
-            .update(updateData)
-            .eq("customer_number", member.customer_number)
-
-          if (updateError) throw updateError
-          updated++
-        } else {
-          // Insert new member - generate new CUID2 token
-          const newMember = {
-            ...member,
-            token: generateCuid2Token(), // Generate real CUID2 for new member
-          }
-          const { error: insertError } = await supabase.from("members").insert(newMember)
-          if (insertError) throw insertError
-          inserted++
-        }
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to save members")
       }
 
+      const data = await response.json()
       setShowMapper(false)
       setUploadedData([])
       setColumnHeaders([])
       setSuccess(
-        `${newMembers.length} Mitglieder verarbeitet: ${inserted} neu eingefügt, ${updated} aktualisiert!`
+        `${data.total} Mitglieder verarbeitet: ${data.inserted} neu eingefügt, ${data.updated} aktualisiert!`
       )
       setCurrentPage(1) // Reset to first page after import
       await fetchMembers(1)
@@ -221,40 +166,41 @@ export function AdminDashboard() {
 
   const handleRenewLink = async (member: Member, weeks: number) => {
     try {
-      const now = new Date()
-      const newExpiryDate = new Date(now.getTime() + weeks * 7 * 24 * 60 * 60 * 1000)
-      // Token stays the same (keep existing CUID2), only update expiry
+      const response = await fetch(`/api/admin/members/${member.customer_number}/renew-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weeks }),
+      })
 
-      const { error } = await supabase
-        .from("members")
-        .update({
-          expiry_date: newExpiryDate.toISOString(),
-        })
-        .eq("customer_number", member.customer_number)
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to renew link")
+      }
 
-      if (error) throw error
-
-      setSuccess(
-        `Gültigkeit für ${member.first_name} ${member.last_name} wurde auf ${weeks} Wochen verlängert!`
-      )
+      setSuccess(`Gültigkeit für ${member.first_name} ${member.last_name} (ID: ${member.customer_number}) auf ${weeks} Wochen gesetzt!`)
       await fetchMembers(currentPage)
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error renewing link:", err)
-      setError("Fehler beim Verlängern der Gültigkeit")
+      setError(err.message || "Fehler beim Verlängern der Gültigkeit")
     }
   }
 
   const handleDelete = async (member: Member) => {
     try {
-      const { error } = await supabase.from("members").delete().eq("customer_number", member.customer_number)
+      const response = await fetch(`/api/admin/members/${member.customer_number}`, {
+        method: "DELETE",
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to delete member")
+      }
 
       setSuccess(`Mitglied ${member.first_name} ${member.last_name} (ID: ${member.customer_number}) wurde gelöscht!`)
       await fetchMembers(currentPage)
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error deleting member:", err)
-      setError("Fehler beim Löschen des Mitglieds")
+      setError(err.message || "Fehler beim Löschen des Mitglieds")
     }
   }
 
@@ -263,11 +209,9 @@ export function AdminDashboard() {
       setError(null)
       setSuccess(null)
 
-      // Use API route with service role key to bypass RLS
-      const response = await fetch("/api/admin/invalidate-token", {
+      const response = await fetch(`/api/admin/members/${member.customer_number}/invalidate-token`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer_number: member.customer_number }),
       })
 
       if (!response.ok) {
@@ -289,56 +233,24 @@ export function AdminDashboard() {
       setError(null)
       setSuccess(null)
 
-      const now = new Date()
-      const expiryDate = new Date(now.getTime() + weeks * 7 * 24 * 60 * 60 * 1000)
+      const response = await fetch("/api/admin/members/tokens", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weeks }),
+      })
 
-      // Fetch all members
-      const allMembers: Member[] = []
-      const pageSize = 1000
-      let from = 0
-      let hasMore = true
-
-      while (hasMore) {
-        const { data, error } = await supabase
-          .from("members")
-          .select("customer_number")
-          .range(from, from + pageSize - 1)
-
-        if (error) throw error
-
-        if (data && data.length > 0) {
-          allMembers.push(...(data as Member[]))
-          from += pageSize
-          hasMore = data.length === pageSize
-        } else {
-          hasMore = false
-        }
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to generate tokens")
       }
 
-      // Update all members with new expiry (keep existing CUID2 tokens)
-      let updated = 0
-      for (const member of allMembers) {
-        const { error: updateError } = await supabase
-          .from("members")
-          .update({
-            expiry_date: expiryDate.toISOString(),
-            // Token stays the same (keep existing CUID2)
-          })
-          .eq("customer_number", member.customer_number)
-
-        if (updateError) {
-          console.error(`Error updating token for ${member.customer_number}:`, updateError)
-          continue
-        }
-        updated++
-      }
-
-      setSuccess(`Gültigkeit für ${updated} von ${allMembers.length} Mitgliedern auf ${weeks} Wochen gesetzt!`)
+      const data = await response.json()
+      setSuccess(`Gültigkeit für ${data.updated} von ${data.total} Mitgliedern auf ${weeks} Wochen gesetzt!`)
       setShowTokenDialog(false)
       await fetchMembers(currentPage)
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error generating tokens:", err)
-      setError("Fehler beim Erstellen der Tokens")
+      setError(err.message || "Fehler beim Erstellen der Tokens")
     } finally {
       setIsGeneratingTokens(false)
     }
@@ -355,19 +267,43 @@ export function AdminDashboard() {
       setError(null)
       setSuccess(null)
 
+      // Fetch all members and delete them one by one
+      const allMembers: Member[] = []
+      let page = 1
+      let hasMore = true
+
+      while (hasMore) {
+        const response = await fetch(`/api/admin/members?page=${page}`)
+        if (!response.ok) break
+        const data = await response.json()
+        if (data.members && data.members.length > 0) {
+          allMembers.push(...data.members)
+          page++
+          hasMore = data.members.length === PAGE_SIZE
+        } else {
+          hasMore = false
+        }
+      }
+
       // Delete all members
-      const { error: deleteError } = await supabase.from("members").delete().neq("customer_number", "")
+      let deleted = 0
+      for (const member of allMembers) {
+        const response = await fetch(`/api/admin/members/${member.customer_number}`, {
+          method: "DELETE",
+        })
+        if (response.ok) {
+          deleted++
+        }
+      }
 
-      if (deleteError) throw deleteError
-
-      setSuccess(`Alle ${totalCount} Mitglieder wurden erfolgreich gelöscht!`)
+      setSuccess(`Alle ${deleted} Mitglieder wurden erfolgreich gelöscht!`)
       setShowDeleteDialog(false)
       setDeleteConfirmation("")
       setCurrentPage(1)
       await fetchMembers(1)
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error deleting all members:", err)
-      setError("Fehler beim Löschen aller Daten")
+      setError(err.message || "Fehler beim Löschen aller Daten")
     } finally {
       setIsDeleting(false)
     }
@@ -431,14 +367,16 @@ export function AdminDashboard() {
               <div>
                 <CardTitle>Mitgliederliste</CardTitle>
                 <CardDescription>
-                  {totalCount > 0 ? (
+                  {isLoading ? (
+                    "Lade..."
+                  ) : totalCount > 0 ? (
                     <>
                       Zeige {((currentPage - 1) * PAGE_SIZE) + 1}-{Math.min(currentPage * PAGE_SIZE, totalCount)} von {totalCount} Mitgliedern
                       {" | "}
                       {members.filter((m) => m.modified).length} auf dieser Seite mit Änderungen
                     </>
                   ) : (
-                    "Lade..."
+                    "Keine Mitgliedsdaten vorhanden"
                   )}
                 </CardDescription>
               </div>
