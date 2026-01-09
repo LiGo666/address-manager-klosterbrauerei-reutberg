@@ -260,23 +260,26 @@ export function AdminDashboard() {
 
   const handleInvalidateToken = async (member: Member) => {
     try {
-      // Set expiry to past to invalidate token
-      const pastDate = new Date(0).toISOString()
+      setError(null)
+      setSuccess(null)
 
-      const { error } = await supabase
-        .from("members")
-        .update({
-          expiry_date: pastDate,
-        })
-        .eq("customer_number", member.customer_number)
+      // Use API route with service role key to bypass RLS
+      const response = await fetch("/api/admin/invalidate-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer_number: member.customer_number }),
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to invalidate token")
+      }
 
       setSuccess(`Token für ${member.first_name} ${member.last_name} (ID: ${member.customer_number}) wurde ungültig gemacht!`)
       await fetchMembers(currentPage)
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error invalidating token:", err)
-      setError("Fehler beim Ungültigmachen des Tokens")
+      setError(err.message || "Fehler beim Ungültigmachen des Tokens")
     }
   }
 

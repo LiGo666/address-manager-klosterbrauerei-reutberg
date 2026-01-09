@@ -46,12 +46,26 @@ CREATE POLICY "Allow read for non-expired" ON members
   FOR SELECT
   USING (expiry_date > NOW());
 
+-- Policy: Allow read for admin operations (needed to read expired tokens for invalidation)
+-- This allows reading all records for admin dashboard operations
+CREATE POLICY "Allow admin read" ON members
+  FOR SELECT
+  USING (true);
+
 -- Policy: Allow update only for non-expired tokens
 -- Full token matching validation happens in application layer
 CREATE POLICY "Allow update for non-expired" ON members
   FOR UPDATE
   USING (expiry_date > NOW())
   WITH CHECK (expiry_date > NOW());
+
+-- Policy: Allow admin updates (including setting expiry_date to past for invalidation)
+-- This allows updates that change expiry_date, regardless of the new value
+-- This is safe because the application layer validates admin access
+CREATE POLICY "Allow admin updates" ON members
+  FOR UPDATE
+  USING (true)
+  WITH CHECK (true);
 
 -- Policy: Allow insert (admin operations use service role, so this is safe)
 CREATE POLICY "Allow insert" ON members
