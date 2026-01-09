@@ -49,7 +49,13 @@ export function MemberEditForm({ member }: MemberEditFormProps) {
         updateData.original_city = member.city
       }
 
-      const { error: updateError } = await supabase.from("members").update(updateData).eq("token", member.token)
+      // Update with token and expiry validation
+      // Token remains valid for reuse within expiry period
+      const { error: updateError } = await supabase
+        .from("members")
+        .update(updateData)
+        .eq("token", member.token)
+        .gt("expiry_date", new Date().toISOString())
 
       if (updateError) throw updateError
 

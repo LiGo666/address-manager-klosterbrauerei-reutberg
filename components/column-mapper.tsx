@@ -17,7 +17,7 @@ interface ColumnMapperProps {
 }
 
 const FIELD_LABELS: Record<keyof ColumnMapping, { label: string; required: boolean }> = {
-  customerNumber: { label: "Mitgliedsnummer", required: true },
+  customerNumber: { label: "ID", required: true },
   salutation: { label: "Anrede", required: false },
   firstName: { label: "Vorname", required: true },
   lastName: { label: "Nachname", required: true },

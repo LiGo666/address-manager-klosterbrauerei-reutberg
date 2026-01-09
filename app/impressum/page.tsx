@@ -29,7 +29,8 @@ export default function ImpressumPage() {
               <p>
                 Klosterbrauerei Reutberg eG
                 <br />
-                Klosterweg 1<br />
+                Am Reutberg 3
+                <br />
                 83679 Sachsenkam
                 <br />
                 Deutschland
@@ -39,29 +40,29 @@ export default function ImpressumPage() {
             <section>
               <h3 className="text-lg font-semibold">Vertreten durch</h3>
               <p>
-                Vorstand der Genossenschaft
+                Vorstandsvorsitzender: August Maerz
                 <br />
-                (Vertretungsberechtigt gemäß Satzung)
+                Geschäftsführer: Stephan Hoepfl
               </p>
             </section>
 
             <section>
               <h3 className="text-lg font-semibold">Kontakt</h3>
               <p>
-                Telefon: +49 (0) 8021 / 9045-0
+                Telefon: 08021 / 258
                 <br />
-                E-Mail: info@klosterbrauerei-reutberg.de
+                Fax: 08021 / 17 06
+                <br />
+                E-Mail: Reutberg-@T-Online.de
               </p>
             </section>
 
             <section>
               <h3 className="text-lg font-semibold">Registereintrag</h3>
               <p>
-                Eingetragen im Genossenschaftsregister
+                Genossenschaftsregister beim Amtsgericht Wolfratshausen
                 <br />
-                Registergericht: Amtsgericht München
-                <br />
-                Registernummer: GnR [Nummer]
+                Registernummer: GenR 1000
               </p>
             </section>
 
@@ -70,17 +71,53 @@ export default function ImpressumPage() {
               <p>
                 Umsatzsteuer-Identifikationsnummer gemäß § 27a Umsatzsteuergesetz:
                 <br />
-                DE [Nummer]
+                USt-IdNr: DE128373791
+              </p>
+            </section>
+
+            <section>
+              <h3 className="text-lg font-semibold">Weitere Angaben</h3>
+              <p>
+                Berufsaufsichtsbehörde: Berufsgenossenschaft Nahrungs- Genussmittel und Gaststätten
+                <br />
+                Kammer: Handwerkskammer München und Oberbayern
+                <br />
+                Berufshaftpflichtversicherung: Allianz
+                <br />
+                Name des Prüfungsverbandes: Genossenschaftsverband Bayern e.V.
+                <br />
+                Sitz des Prüfungsverbandes: Türkenstraße 22-24, 80333 München
+              </p>
+            </section>
+
+            <section>
+              <h3 className="text-lg font-semibold">Haftungsausschluss</h3>
+              <p>
+                Die Brauerei prüft und aktualisiert die Informationen auf ihren Webseiten regelmäßig. Trotz aller Sorgfalt können sich die Daten inzwischen verändert haben. Eine Haftung oder Garantie für die Aktualität, Richtigkeit und Vollständigkeit der zur Verfügung gestellten Informationen kann daher nicht übernommen werden.
+              </p>
+              <p>
+                Gleiches gilt auch für alle anderen Webseiten, auf die mittels Hyperlink verwiesen wird. Wir sind für den Inhalt der Webseiten, die aufgrund einer solchen Verbindung erreicht werden, nicht verantwortlich.
+              </p>
+              <p>
+                Inhalt und Gestaltung der Internetseiten sind urheberrechtlich geschützt. Eine Vervielfältigung der Seiten oder ihrer Inhalte bedarf der vorherigen schriftlichen Zustimmung der Genossenschaft, soweit die Vervielfältigung nicht ohnehin gesetzlich gestattet ist.
+              </p>
+              <p>
+                Dieser Haftungsausschluss ist als Teil des Internetangebotes zu betrachten, von dem aus auf diese Seite verwiesen wurde. Sofern Teile oder einzelne Formulierungen dieses Textes der geltenden Rechtslage nicht, nicht mehr oder nicht vollständig entsprechen sollten, bleiben die übrigen Teile des Dokumentes in ihrem Inhalt und ihrer Gültigkeit davon unberührt.
               </p>
             </section>
 
             <section>
               <h3 className="text-lg font-semibold">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h3>
               <p>
-                Klosterbrauerei Reutberg eG
+                August Maerz; Vorstandsvorsitzender Genossenschaftsbrauerei Reutberg eG
                 <br />
-                Klosterweg 1<br />
-                83679 Sachsenkam
+                Stephan Hoepfl, Geschäftsführer Genossenschaftsbrauerei Reutberg eG
+                <br />
+                <br />
+                Erstellt wird die Seite von Rainer Gast.
+                <br />
+                <br />
+                Die Verantwortlichen sind unter der oben angegebenen Anschrift zu erreichen.
               </p>
             </section>
 

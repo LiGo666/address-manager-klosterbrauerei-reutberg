@@ -3,6 +3,7 @@ import { MemberEditForm } from "@/components/member-edit-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, Clock } from "lucide-react"
+import { isValidTokenFormat } from "@/lib/token"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -64,27 +65,23 @@ export default async function MitgliedPage({ searchParams }: MitgliedPageProps) 
     )
   }
 
-  const supabase = await createClient()
-
-  // Fetch member by token
-  const { data: member, error } = await supabase.from("members").select("*").eq("token", token).single()
-
-  if (error || !member) {
+  // Validate token format before database query
+  if (!isValidTokenFormat(token)) {
     return (
       <main className="min-h-screen bg-white">
         <div className="container mx-auto flex min-h-screen flex-col items-center justify-center px-4 py-8">
           <Logo />
           <Card className="w-full max-w-md">
             <CardHeader>
-              <CardTitle className="text-destructive">Link nicht gefunden</CardTitle>
+              <CardTitle className="text-destructive">Ungültiger Link</CardTitle>
             </CardHeader>
             <CardContent>
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Fehler</AlertTitle>
                 <AlertDescription>
-                  Dieser Bearbeitungslink ist ungültig oder existiert nicht mehr. Bitte wenden Sie sich an die
-                  Verwaltung.
+                  Der Bearbeitungslink hat ein ungültiges Format. Bitte verwenden Sie den Link, den Sie per E-Mail erhalten
+                  haben.
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -94,7 +91,42 @@ export default async function MitgliedPage({ searchParams }: MitgliedPageProps) 
     )
   }
 
-  // Check if link is expired
+  const supabase = await createClient()
+
+  // Fetch member by token with expiry check in query
+  const { data: member, error } = await supabase
+    .from("members")
+    .select("*")
+    .eq("token", token)
+    .gt("expiry_date", new Date().toISOString())
+    .single()
+
+  if (error || !member) {
+    return (
+      <main className="min-h-screen bg-white">
+        <div className="container mx-auto flex min-h-screen flex-col items-center justify-center px-4 py-8">
+          <Logo />
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="text-destructive">Link nicht gefunden oder abgelaufen</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Fehler</AlertTitle>
+                <AlertDescription>
+                  Dieser Bearbeitungslink ist ungültig, existiert nicht mehr oder ist abgelaufen. Links sind 4 Wochen gültig. 
+                  Bitte wenden Sie sich an die Verwaltung für einen neuen Link.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    )
+  }
+
+  // Additional expiry check (redundant but safe)
   const expiryDate = new Date(member.expiry_date)
   const now = new Date()
 
@@ -163,6 +195,17 @@ export default async function MitgliedPage({ searchParams }: MitgliedPageProps) 
                 </Link>
               </p>
               <p className="mt-1">Diese Seite verwendet keine Cookies.</p>
+              <p className="mt-2">
+                Innovative IT Dienstleistungen?{" "}
+                <Link
+                  href="https://www.christiangotthardt.de/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-foreground"
+                >
+                  https://www.christiangotthardt.de/
+                </Link>
+              </p>
             </div>
           </CardContent>
         </Card>
