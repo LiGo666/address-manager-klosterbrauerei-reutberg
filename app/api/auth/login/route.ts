@@ -9,16 +9,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Benutzername und Passwort sind erforderlich" }, { status: 400 })
     }
 
-    // Debug: Log in development only
-    if (process.env.NODE_ENV !== "production") {
-      console.log("Login attempt:", { 
-        username, 
-        passwordLength: password.length,
-        expectedUsername: process.env.ADMIN_NAME || "admin",
-        hasAdminPw: !!process.env.ADMIN_PW
-      })
-    }
-
     if (validateAdminCredentials(username, password)) {
       const response = NextResponse.json({ success: true })
       response.cookies.set("admin_session", "authenticated", {
@@ -32,8 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ error: "Ungültige Anmeldedaten" }, { status: 401 })
-  } catch (error) {
-    console.error("Login error:", error)
+  } catch {
     return NextResponse.json({ error: "Ein Fehler ist aufgetreten" }, { status: 500 })
   }
 }

@@ -10,7 +10,8 @@ function getAdminPassword(): string {
   if (!password) {
     throw new Error("ADMIN_PW environment variable is not set")
   }
-  return password
+  // Trim whitespace and newlines that might have been added when setting the env var
+  return password.trim()
 }
 
 function getAdminPasswordHash(): string {
@@ -23,26 +24,10 @@ function getAdminPasswordHash(): string {
 }
 
 export function validateAdminCredentials(username: string, password: string): boolean {
-  const adminPassword = getAdminPassword()
   const adminPasswordHash = getAdminPasswordHash()
   
   const usernameMatch = username === ADMIN_USERNAME
   const passwordMatch = compareSync(password, adminPasswordHash)
-  
-  // Debug logging
-  console.log("Auth validation:", {
-    usernameMatch,
-    passwordMatch,
-    expectedUsername: ADMIN_USERNAME,
-    receivedUsername: username,
-    passwordLength: password.length,
-    adminPwLength: adminPassword.length,
-    adminPwFirstChar: adminPassword[0],
-    adminPwLastChar: adminPassword[adminPassword.length - 1],
-    adminPwContainsPercent: adminPassword.includes("%"),
-    receivedPwFirstChar: password[0],
-    receivedPwLastChar: password[password.length - 1],
-  })
   
   return usernameMatch && passwordMatch
 }
